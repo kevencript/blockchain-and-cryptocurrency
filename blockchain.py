@@ -10,9 +10,9 @@ from flask import Flask, jsonify
 class Blockchain:
     def __init__(self):
         self.chain = []
-        self.createBlock(proof=1, previous_hash='0')
+        self.create_block(proof=1, previous_hash='0')
 
-    def createBlock(self, proof, previous_hash):
+    def create_block(self, proof, previous_hash):
         block = {
             'index': len(self.chain) + 1,
             'timestamp': str(datetime.datetime.now()),
@@ -23,19 +23,45 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def getPreviusBlock(self):
+    def get_previus_block(self):
         return self.chain[-1]
 
-    def proofOfWork(self, previous_proof):
-        newProof = 1
-        checkProof = False
+    def hash_operation(self, previous_proof, new_proof):
+        return hashlib.sha256(
+            str(new_proof**2 - previous_proof**2).enconde()).hexdigest()
 
-        while checkProof == False:
-            hashOperation = hashlib.sha256(
-                str(newProof**2 - previous_proof**2).enconde()).hexdigest()
-            if hashOperation[:4] == '0000':
-                checkProof = True
+    def proof_of_work(self, previous_proof):
+        new_proof = 1
+        check_proof = False
+
+        while check_proof == False:
+            hashed = self.hash_operation(previous_proof, new_proof)
+
+            if hashed[:4] == '0000':
+                check_proof = True
             else:
-                newProof += 1
+                new_proof += 1
 
-        return newProof
+        return new_proof
+
+    def hash(self, block):
+        encoded = json.dumps(block, sort_keys=True).enconde()
+        return hashlib.sha256(encoded).hexdigest()
+
+    def is_chain_valid(self, chain):
+        previous_block = chain[0]
+        block_index = 1
+
+        while block_index < len(chain):
+            block = chain[block_index]
+            if block['previous_hash'] != self.hash(previous_block):
+                return False
+
+            previous_proof = previous_block['proof']
+            proof = block['proof']
+            hashed = self.hash_operation(previous_proof, proof)
+            if hashed[:4] != '0000':
+                return False
+            previous_block = block
+            block_index += 1
+        return True
