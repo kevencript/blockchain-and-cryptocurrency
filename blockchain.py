@@ -23,3 +23,6 @@ class Blockchain:
 
         self.chain.append(block)
         return block
+
+    def getPreviusBlock(self):
+        return self.chain[-1]
